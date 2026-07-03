@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZAM Electric — Skill Assessment</title>
+<style>
+  :root {
+    --red: #CC2222; --red-light: #f9e0e0; --dark: #1a1a1a; --mid: #444;
+    --muted: #888; --border: #ddd; --bg: #f5f5f5; --white: #fff;
+    --green: #0f6e56; --green-light: #e1f5ee; --blue: #185fa5; --blue-light: #e6f1fb;
+    --amber: #854f0b; --amber-light: #faeeda; --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+  .screen { display: none; max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+  .screen.active { display: block; }
+  .app-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .logo-box { width: 44px; height: 44px; background: var(--red); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-box span { color: #fff; font-weight: 700; font-size: 13px; }
+  .app-title { font-size: 17px; font-weight: 600; }
+  .app-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 14px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+  input[type=text], input[type=password], select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 15px; background: var(--white); color: var(--dark); outline: none; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--red); }
+  textarea { min-height: 130px; resize: vertical; line-height: 1.6; font-size: 14px; }
+  .form-row { margin-bottom: 14px; }
+  .level-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  .level-btn { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 8px; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .level-btn:hover { border-color: var(--red); }
+  .level-btn.selected { border-color: var(--red); background: var(--red-light); }
+  .level-btn .lnum { font-size: 22px; font-weight: 700; color: var(--red); }
+  .level-btn .ltitle { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
+  .level-btn .lmeta { font-size: 10px; color: var(--muted); margin-top: 6px; }
+  .btn-primary { width: 100%; padding: 12px; font-size: 15px; font-weight: 600; border-radius: var(--radius); background: var(--red); color: #fff; border: none; cursor: pointer; transition: background 0.15s; }
+  .btn-primary:hover { background: #a81c1c; }
+  .btn-primary:disabled { opacity: 0.4; cursor: default; }
+  .btn-secondary { width: 100%; padding: 11px; font-size: 14px; font-weight: 500; border-radius: var(--radius); background: var(--white); color: var(--dark); border: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+  .btn-secondary:hover { background: var(--bg); }
+  .progress-wrap { background: #e5e5e5; border-radius: 99px; height: 5px; margin-bottom: 16px; overflow: hidden; }
+  .progress-bar { height: 5px; background: var(--red); border-radius: 99px; transition: width 0.3s; }
+  .q-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .q-count { font-size: 13px; color: var(--muted); }
+  .timer { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 99px; background: var(--bg); border: 1px solid var(--border); color: var(--dark); }
+  .timer.warn { background: var(--red-light); border-color: var(--red); color: var(--red); }
+  .section-tag { display: inline-block; font-size: 11px; font-weight: 600; color: var(--blue); background: var(--blue-light); border-radius: 4px; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+  .q-text { font-size: 17px; font-weight: 500; line-height: 1.55; margin-bottom: 18px; }
+  .options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .opt { display: flex; align-items: flex-start; gap: 10px; background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 11px 14px; cursor: pointer; transition: border-color 0.1s; }
+  .opt:hover { border-color: #bbb; }
+  .opt.selected { border-color: var(--blue); background: var(--blue-light); }
+  .opt.correct { border-color: var(--green); background: var(--green-light); }
+  .opt.wrong { border-color: var(--red); background: var(--red-light); }
+  .opt.removed { opacity: 0.35; pointer-events: none; }
+  .opt-letter { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; color: var(--muted); }
+  .opt.selected .opt-letter { background: var(--blue); color: #fff; border-color: transparent; }
+  .opt.correct .opt-letter { background: var(--green); color: #fff; border-color: transparent; }
+  .opt.wrong .opt-letter { background: var(--red); color: #fff; border-color: transparent; }
+  .opt-text { font-size: 14px; line-height: 1.5; padding-top: 2px; }
+  .feedback { font-size: 13px; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid; }
+  .feedback.correct { background: var(--green-light); border-color: var(--green); color: var(--green); }
+  .feedback.wrong { background: var(--red-light); border-color: var(--red); color: #a32d2d; }
+  .feedback.timeout { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
+  .hidden { display: none; }
+  .oe-prompt { font-size: 16px; font-weight: 500; line-height: 1.6; margin-bottom: 10px; }
+  .oe-note { font-size: 13px; color: var(--muted); margin-bottom: 12px; font-style: italic; }
+  .score-circle { width: 110px; height: 110px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 16px; border: 3px solid; }
+  .score-circle.pass { border-color: var(--green); background: var(--green-light); }
+  .score-circle.fail { border-color: var(--red); background: var(--red-light); }
+  .score-pct { font-size: 28px; font-weight: 700; }
+  .score-pct.pass { color: var(--green); }
+  .score-pct.fail { color: var(--red); }
+  .score-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .result-title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 6px; }
+  .result-sub { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.5; margin-bottom: 20px; }
+  .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-section { color: var(--muted); max-width: 70%; }
+  .breakdown-score { font-weight: 600; flex-shrink: 0; }
+  .breakdown-score.good { color: var(--green); }
+  .breakdown-score.bad { color: var(--red); }
+  .notif-box { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-top: 14px; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .notif-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .oe-pending { background: var(--amber-light); border: 1px solid #e8c878; border-radius: var(--radius); padding: 12px 16px; margin-top: 14px; font-size: 13px; color: var(--amber); line-height: 1.6; }
+  .pin-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .pin-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg); border-radius: 8px; font-size: 13px; }
+  .pin-code { font-family: monospace; font-size: 16px; font-weight: 700; letter-spacing: 2px; }
+  .pin-status { font-size: 12px; padding: 2px 8px; border-radius: 99px; }
+  .pin-status.unused { background: var(--green-light); color: var(--green); }
+  .pin-status.used { background: var(--red-light); color: var(--red); }
+  .pin-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge { display: inline-flex; font-size: 12px; padding: 3px 10px; border-radius: 99px; font-weight: 500; }
+  @media (max-width: 480px) { .level-grid { grid-template-columns: repeat(2,1fr); } }
+</style>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function(){ emailjs.init({ publicKey: 'ZBdUxg5SGDen1nN-1' }); })();
+</script>
+</head>
+<body>
+
+<!-- PIN ENTRY -->
+<div class="screen active" id="screen-pin">
+  <div class="app-header">
+    <div class="logo-box"><span>ZAM</span></div>
+    <div><div class="app-title">Skill Assessment</div><div class="app-sub">New Construction Division</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Start assessment</div>
+    <div class="form-row"><label>Employee name</label><input type="text" id="emp-name" placeholder="Full name" oninput="checkPinReady()"></div>
+    <div class="form-row"><label>Assessment PIN</label><input type="text" id="pin-input" placeholder="Enter PIN" maxlength="6" oninput="checkPinReady()" style="text-transform:uppercase;letter-spacing:2px;font-family:monospace;font-size:18px;"></div>
+    <p id="pin-error" style="color:var(--red);font-size:13px;margin-bottom:10px;display:none">Invalid or already used PIN. Contact your supervisor.</p>
+    <button class="btn-primary" id="pin-btn" onclick="startFromPin()" disabled>Continue</button>
+  </div>
+  <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:12px">
+    <a href="#" onclick="showAdmin()" style="color:var(--muted)">Admin</a>
+  </p>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="screen" id="screen-level">
+  <div class="app-header">
+    <div class="logo-box"><span>ZAM</span></div>
+    <div><div class="app-title">Select level</div><div class="app-sub" id="level-sub"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Advancing into:</div>
+    <div class="level-grid">
+      <div class="level-btn" onclick="selectLevel(1)"><div class="lnum">L1</div><div class="ltitle">Entry Level</div><div class="lmeta">20 MC · 5 OE</div></div>
+      <div class="level-btn" onclick="selectLevel(2)"><div class="lnum">L2</div><div class="ltitle">Developing Proficiency</div><div class="lmeta">20 MC · 5 OE</div></div>
+      <div class="level-btn" onclick="selectLevel(3)"><div class="lnum">L3</div><div class="ltitle">Independent Tech</div><div class="lmeta">20 MC · 7 OE</div></div>
+      <div class="level-btn" onclick="selectLevel(4)"><div class="lnum">L4</div><div class="ltitle">Lead Installer</div><div class="lmeta">15 MC · 10 OE</div></div>
+    </div>
+    <button class="btn-primary" id="level-btn" onclick="confirmLevel()" disabled>Start assessment</button>
+  </div>
+</div>
+
+<!-- QUESTION -->
+<div class="screen" id="screen-question">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="font-size:13px;color:var(--muted)" id="q-header-name"></div>
+    <div class="timer" id="timer-display">40s</div>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+  <div class="card">
+    <div class="q-meta">
+      <span class="q-count" id="q-count"></span>
+      <span class="badge" id="q-type-badge"></span>
+    </div>
+    <div class="section-tag" id="section-tag"></div>
+
+    <div id="mc-area">
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="options-list"></div>
+      <div class="feedback hidden" id="feedback-box"></div>
+    </div>
+
+    <div id="oe-area" class="hidden">
+      <div class="oe-prompt" id="oe-text"></div>
+      <div class="oe-note">No time limit — take as much time as you need.</div>
+      <textarea id="oe-answer" placeholder="Write your answer here…"></textarea>
+    </div>
+
+    <button class="btn-secondary" id="next-btn" onclick="nextQuestion()" disabled style="margin-top:12px">Next question</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="screen-result">
+  <div class="app-header">
+    <div class="logo-box"><span>ZAM</span></div>
+    <div><div class="app-title">Assessment complete</div><div class="app-sub" id="result-sub-header"></div></div>
+  </div>
+  <div class="card" style="text-align:center;padding-top:28px;padding-bottom:24px;">
+    <div class="score-circle" id="score-circle">
+      <div class="score-pct" id="score-pct"></div>
+      <div class="score-label">MC score</div>
+    </div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-sub" id="result-sub"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Score by skill area</div>
+    <div id="breakdown"></div>
+  </div>
+  <div class="oe-pending" id="oe-pending-box" style="display:none">
+    <strong>Open-ended answers captured.</strong> Review the responses below before making a final pass/fail determination.
+  </div>
+  <div class="card" id="oe-review-card" style="display:none">
+    <div class="card-title">Open-ended responses</div>
+    <div id="oe-review-list"></div>
+  </div>
+  <div class="notif-box">
+    <div class="notif-label">Summary</div>
+    <div id="notif-text"></div>
+  </div>
+  <button class="btn-secondary" onclick="resetApp()" style="margin-top:16px">Start new assessment</button>
+</div>
+
+<!-- ADMIN -->
+<div class="screen" id="screen-admin">
+  <div class="app-header">
+    <div class="logo-box"><span>ZAM</span></div>
+    <div><div class="app-title">Admin</div><div class="app-sub">PIN management</div></div>
+  </div>
+  <div class="card" id="admin-login-card">
+    <div class="card-title">Admin access</div>
+    <div class="form-row"><label>Password</label><input type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+    <p id="admin-error" style="color:var(--red);font-size:13px;margin-bottom:10px;display:none">Incorrect password.</p>
+    <button class="btn-primary" onclick="adminLogin()">Sign in</button>
+  </div>
+  <div id="admin-panel" style="display:none">
+    <div class="card">
+      <div class="card-title">Generate PIN</div>
+      <div class="form-row"><label>Employee name</label><input type="text" id="admin-emp-name" placeholder="Full name"></div>
+      <div class="form-row"><label>Level</label>
+        <select id="admin-level">
+          <option value="1">L1 — Entry Level</option>
+          <option value="2">L2 — Developing Proficiency</option>
+          <option value="3">L3 — Independent Tech</option>
+          <option value="4">L4 — Lead Installer</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="generatePin()">Generate PIN</button>
+      <div id="new-pin-display" style="display:none;margin-top:20px;text-align:center;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Give this PIN to the employee on test day:</div>
+        <div style="font-family:monospace;font-size:36px;font-weight:700;letter-spacing:6px;color:var(--red)" id="new-pin-value"></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">One-time use only.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">PIN log</div>
+      <div class="pin-list" id="pin-list"></div>
+    </div>
+    <button class="btn-secondary" onclick="adminLogout()" style="margin-top:8px">Sign out</button>
+  </div>
+  <button class="btn-secondary" onclick="showScreen('screen-pin')" style="margin-top:12px">← Back</button>
+</div>
+
+<script>
+const QUESTIONS = {"L1":{"mc":[{"s":"Wire & cable identification","q":"A WHITE NM/Romex cable jacket indicates:","opts":["12 AWG, 2-conductor","10 AWG, 2-conductor","14 AWG, 3-conductor","14 AWG, 2-conductor"],"a":3},{"s":"Wire & cable identification","q":"A YELLOW NM/Romex cable jacket indicates:","opts":["14 AWG, 2-conductor","10 AWG, 2-conductor","12 AWG, 2-conductor","12 AWG, 3-conductor"],"a":2},{"s":"Wire & cable identification","q":"An ORANGE NM/Romex cable jacket indicates:","opts":["12 AWG, 2-conductor","8 AWG, 2-conductor","10 AWG, 2-conductor","14 AWG, 3-conductor"],"a":2},{"s":"Wire & cable identification","q":"A BLACK NM/Romex 2-conductor cable jacket indicates:","opts":["10 AWG","12 AWG","14 AWG","8 AWG or 6 AWG"],"a":3},{"s":"Wire & cable identification","q":"A LIGHT BLUE NM/Romex cable jacket indicates:","opts":["12 AWG, 3-conductor","10 AWG, 3-conductor","14 AWG, 2-conductor","14 AWG, 3-conductor"],"a":3},{"s":"Wire & cable identification","q":"A PURPLE NM/Romex cable jacket indicates:","opts":["14 AWG, 3-conductor","12 AWG, 2-conductor","10 AWG, 3-conductor","12 AWG, 3-conductor"],"a":3},{"s":"Wire & cable identification","q":"A PINK NM/Romex cable jacket indicates:","opts":["12 AWG, 3-conductor","8 AWG, 3-conductor","10 AWG, 3-conductor","14 AWG, 3-conductor"],"a":2},{"s":"Wire & cable identification","q":"The white conductor inside a NM cable assembly is called the:","opts":["Hot","Switch leg","Neutral","Ground"],"a":2},{"s":"Wire & cable identification","q":"The most common wire gauge for a bathroom outlet home run is:","opts":["14 AWG","10 AWG","8 AWG","12 AWG"],"a":3},{"s":"Wire & cable identification","q":"The most common wire gauge for a general lighting home run is:","opts":["12 AWG","14 AWG","10 AWG","16 AWG"],"a":1},{"s":"Stud markings","q":"What does 'SSS' written on a stud indicate?","opts":["Three switches go at this location","Single switch, single receptacle","Sub-panel switch location","Standard stud spacing — no box required"],"a":0},{"s":"Stud markings","q":"You see 'SSS' on a stud. What box do you install?","opts":["Two single-gang boxes side by side","A junction box with three knockouts","A 2-gang box","A 3-gang box"],"a":3},{"s":"Stud markings","q":"What does 'SSR' written on a stud indicate?","opts":["Standard switch rough-in location","Sub-panel switch and receptacle","Switch, Switch, Receptacle at this location","Single switch rough-in only"],"a":2},{"s":"Stud markings","q":"You see 'SSR' on a stud. What box do you install?","opts":["A 2-gang box","A 3-gang box","Two single-gang boxes","A single-gang box and a round box"],"a":1},{"s":"Stud markings","q":"What does 'BLOCK x3' on a stud mean?","opts":["Three cables are allowed through this stud","Block out with three framing members before nailing the gang box","This stud cannot be drilled — structural member","Install three conduit straps at this location"],"a":1},{"s":"Stud markings","q":"You see 'S3' on a stud. What box do you install?","opts":["A 3-gang box","A 2-gang box","A round ceiling box","A single-gang box"],"a":3},{"s":"Boxing out roughs","q":"The typical rough-in height for a standard wall receptacle is:","opts":["6 to 10 inches","46 to 48 inches","13 to 18 inches","24 to 30 inches"],"a":2},{"s":"Boxing out roughs","q":"The typical rough-in height for a wall switch is:","opts":["46 to 48 inches","13 to 18 inches","24 to 30 inches","36 to 40 inches"],"a":0},{"s":"Boxing out roughs","q":"The typical rough-in height for a kitchen countertop receptacle is:","opts":["13 to 18 inches","24 to 30 inches","36 to 40 inches","46 to 48 inches"],"a":3},{"s":"Boxing out roughs","q":"Standard interior drywall thickness is:","opts":["1/4 inch","3/8 inch","5/8 inch","1/2 inch"],"a":3},{"s":"Boxing out roughs","q":"A block-out is used when a box needs to be located between studs. Which is a valid reason?","opts":["To skip a nail plate requirement","To reduce wire length to the panel","To avoid drilling through a stud","To accommodate trim or spacing"],"a":3},{"s":"Boxing out roughs","q":"What type of nail-on box is used for an electric dryer?","opts":["Single-gang box","Round ceiling box","2-gang nail-on box","4-inch square box"],"a":2},{"s":"Boxing out roughs","q":"Compared to a standard 2-gang box, a range box is:","opts":["Shallower with fewer knockouts","The same depth but wider","Only approved for gas ranges","Deeper with more cubic inches"],"a":3},{"s":"Boxing out roughs","q":"Plate screws on a device or cover plate should be aligned:","opts":["Horizontally","At 45 degrees","Vertically","Either direction is acceptable"],"a":2},{"s":"Pulling home runs","q":"NM/Romex cable must be secured at least every:","opts":["3 feet","4 feet 6 inches","6 feet","5 feet"],"a":1},{"s":"Pulling home runs","q":"The first staple or cable support must be within how many inches of a gang box?","opts":["4 inches","6 inches","12 inches","8 inches"],"a":3},{"s":"Pulling home runs","q":"The maximum number of NM cables under a single staple is:","opts":["4","3","2","1"],"a":2},{"s":"Pulling home runs","q":"What do you label on a home run cable at the device box?","opts":["The wire gauge","HR","The circuit breaker number","The foreman's initials"],"a":1},{"s":"Pulling home runs","q":"What do you label on the home run wire at the electrical panel?","opts":["HR and the pull date","The wire gauge and jacket color","The circuit name written on the stud","The technician's name"],"a":2},{"s":"Pulling home runs","q":"A cable label must always be placed:","opts":["Every 10 feet along the run","At the panel end only","At both ends regardless of direction","Where it stays visible after the jacket is stripped"],"a":3},{"s":"Pulling home runs","q":"A nail plate is required when a cable passes within what distance of the edge of a framing member?","opts":["1/2 inch","3/4 inch","1-1/4 inches","2 inches"],"a":2},{"s":"Cutting-in receptacles","q":"At a box with one 14/3 and two 14/2 cables, how are the black conductors handled?","opts":["All blacks are spliced together with a pigtail to the device","Each black wire connects to its own terminal","The 14/3 black connects; both 14/2 blacks are capped off","Cap all blacks — only the whites connect to the device"],"a":0},{"s":"Cutting-in receptacles","q":"What material is used to group all ground conductors together at a box?","opts":["Wire nut","Electrical tape wrap","Barrel crimp","Push-in wire connector"],"a":2},{"s":"Cutting-in receptacles","q":"The white (neutral) wire connects to which screw on a receptacle?","opts":["Brass screw","Green screw","Red screw","Silver screw"],"a":3},{"s":"Cutting-in receptacles","q":"The black (hot) wire connects to which screw on a receptacle?","opts":["Silver screw","Brass screw","Green screw","Red screw"],"a":1},{"s":"Cutting-in receptacles","q":"A switched receptacle is:","opts":["A GFCI receptacle with a reset button","A 20-amp dedicated receptacle","A receptacle controlled by a wall switch","A receptacle on an arc-fault protected circuit"],"a":2},{"s":"Cutting-in receptacles","q":"How is a switched receptacle identified on the job site after installation?","opts":["Ground prong faces right","Red tape on the cover plate","Installed upside down in the box","A dot placed between the two prongs with a permanent marker"],"a":3},{"s":"Device installation","q":"On a switched receptacle, the ground prong should be oriented:","opts":["Down","Left","Up","Right"],"a":2,"tollBrothers":true},{"s":"Device installation","q":"When installing interior receptacles, devices must be:","opts":["Set back slightly from the finished surface","Installed before drywall is hung","Plumb and flush with the finished wall","Angled downward for drainage"],"a":2},{"s":"Device installation","q":"Extension collars are used when:","opts":["More than two cables enter a box","The box sits behind the finished wall surface","A GFCI device is being installed","The box protrudes past the finished wall"],"a":1},{"s":"Low voltage & data","q":"Another name for an Ethernet cable used in residential construction is:","opts":["RG6","18/3 thermostat cable","Coaxial cable","Cat 6"],"a":3},{"s":"Low voltage & data","q":"Another name for a coaxial cable used for TV service is:","opts":["Cat 6","14/2 NM cable","RG6","18/3 thermostat cable"],"a":2},{"s":"Recessed trim installation","q":"Before inserting the lamp in a recessed trim, the screw shell tab requires:","opts":["Bending it outward for airflow","Painting it to match the ceiling","Replacing it with a new tab","Removing any paint from it"],"a":3},{"s":"Recessed trim installation","q":"After installing a recessed trim it sits above the ceiling plane. You should:","opts":["Apply caulk to seal the gap","Adjust the trim depth until flush with the ceiling","Replace it with a larger diameter trim","Leave it — minor gaps are within tolerance"],"a":1}],"oe":[{"s":"Wire & cable identification","q":"What wire gauge, conductor count, and jacket color would you use for a bathroom outlet home run? Include what that jacket color tells you about the cable.","guide":"Should state: 12 AWG, 2-conductor, yellow jacket. Should explain yellow = 12/2 NM, correct for a 20-amp bathroom circuit."},{"s":"Wire & cable identification","q":"What wire gauge, conductor count, and jacket color would you use for a general lighting home run? Explain what that jacket color tells you.","guide":"Should state: 14 AWG, 2-conductor, white jacket. Should explain white = 14/2 NM, correct for a 15-amp lighting circuit."},{"s":"Wire & cable identification","q":"What wire gauge, conductor count, and jacket color would you use for an electric dryer home run? Explain what that jacket color tells you.","guide":"Should state: 10 AWG, 3-conductor, pink jacket. Should explain pink = 10/3 NM, required for a dryer circuit."},{"s":"Wire & cable identification","q":"Why are there different wire gauge sizes? Explain the relationship between wire gauge, ampacity, and the type of circuit being run.","guide":"Should explain that different circuits draw different amounts of current. Larger loads need larger wire to carry current safely without overheating. Smaller gauge number = larger wire = more ampacity. Example: lighting = 14 AWG (15A), bathroom = 12 AWG (20A), dryer = 10 AWG (30A)."},{"s":"Pulling home runs","q":"What is the purpose of a home run cable? Explain why it runs the way it does and what happens at each end.","guide":"Should explain: a dedicated cable running directly from a device location back to the panel without connecting to other devices. At device end labeled HR. At panel labeled with circuit name from the stud. Allows each circuit to be protected by its own breaker."},{"s":"Boxing out roughs","q":"Explain the best approach to boxing out an entire floor so that nothing gets missed. Walk through your process start to finish.","guide":"Should describe: reading the plan before starting, working room by room, confirming heights per standard or plan before setting each box, confirming depth relative to wall finish type, accounting for block-outs where noted on studs, self-checking each room against the plan before moving on, confirming stud markings match box type installed."},{"s":"Boxing out roughs","q":"What happens if a box is set too far out (proud of the wall) or too deep at rough-in? Describe the consequences of each.","guide":"Too far out: drywall cannot close around it properly, device and cover will not sit flush, box may need to be moved or a mud ring added. Too deep: box sits behind finished wall, extension collar required, potential code violation if not corrected. Both cause rework and delay."}]},"L2":{"mc":[{"s":"GFCI — line vs. load","q":"On a GFCI receptacle, which conductors go on the LINE terminals?","opts":["The unstripped conductors","The load side wires","The stripped conductors","The ground wire only"],"a":2},{"s":"GFCI — line vs. load","q":"On a GFCI receptacle, which conductors go on the LOAD terminals?","opts":["The stripped conductors","The unstripped conductors","The ground wire terminals","The line side wires"],"a":1},{"s":"GFCI — line vs. load","q":"Receptacles wired to the LOAD terminals of a GFCI are:","opts":["Not protected by the GFCI","Protected by the GFCI","Required to be GFCI devices themselves","Only protected if within 6 feet of a sink"],"a":1},{"s":"GFCI — line vs. load","q":"Receptacles wired to the LINE OUT of a GFCI are:","opts":["GFCI protected","Protected only in wet locations","Not GFCI protected","Protected by the upstream breaker only"],"a":2},{"s":"Switch receptacle wiring","q":"Which tab on a switch receptacle should be broken?","opts":["The neutral tab","Both tabs","Neither tab","The hot tab"],"a":3},{"s":"GFCI required locations","q":"Which of the following locations requires GFCI protection?","opts":["All bedroom receptacles","Interior hallway receptacles","Garage receptacles","Dedicated appliance circuits"],"a":2},{"s":"GFCI required locations","q":"GFCI protection is required for receptacles within how many feet of a sink?","opts":["3 feet","10 feet","6 feet","4 feet"],"a":2},{"s":"GFCI required locations","q":"Laundry room receptacles require:","opts":["Arc fault protection only","No special protection","Standard duplex receptacles only","GFCI protection"],"a":3},{"s":"Fire alarm & detection","q":"What wire gauge and conductor count is used for smoke detectors, CO/smoke combo units, and heat detectors?","opts":["12/2 NM cable","14/2 NM cable","12/3 NM cable","14/3 NM cable"],"a":3},{"s":"Fire alarm & detection","q":"In the 14/3 NM cable used for detector wiring, what is the purpose of the red conductor?","opts":["It carries the neutral","It is the interconnect wire so all alarms trigger together","It is the ground conductor","It powers the detector only"],"a":1},{"s":"Fire alarm & detection","q":"Where do smoke detectors go in a dwelling?","opts":["Only in hallways outside bedrooms","Inside every bedroom","In the kitchen and garage only","On every floor in a central location"],"a":1},{"s":"Fire alarm & detection","q":"Where is a CO/smoke combo detector required relative to bedrooms?","opts":["Inside the bedroom","In the basement","In the immediate vicinity outside each bedroom","At the top of every staircase"],"a":2},{"s":"Fire alarm & detection","q":"If installing a detector in the garage, what type of detector is used?","opts":["Smoke detector","Heat detector","CO/smoke combo detector","Ionization detector"],"a":1},{"s":"Fire alarm & detection","q":"CO/smoke combo detectors are required:","opts":["In bedrooms","On every floor of the dwelling","In the garage","In basements"],"a":1},{"s":"Fire alarm & detection","q":"Detectors cannot be installed within how many feet of anything that moves air (HVAC supply, fan, etc.)?","opts":["1 foot","5 feet","3 feet","10 feet"],"a":2},{"s":"Fire alarm & detection","q":"On a vaulted or cathedral ceiling, a detector must be installed within how many feet of the peak?","opts":["3 feet","2 feet","6 inches","1 foot"],"a":3},{"s":"Fire alarm & detection","q":"A detector in a room must be installed at least how many inches from a wall?","opts":["2 inches","4 inches","8 inches","12 inches"],"a":1},{"s":"Fire alarm & detection","q":"What type of smoke detector should be used within 15 feet of a cooking appliance?","opts":["Ionization style","Heat-only style","Photoelectric style","Standard combo style"],"a":2},{"s":"Switch receptacle wiring","q":"When wiring a switch receptacle using a 14/3 cable, the red conductor is:","opts":["The neutral","The ground","The always-hot feed","The switch leg"],"a":3},{"s":"Switch receptacle wiring","q":"When wiring a switch receptacle using a 14/3 cable, the black conductor is:","opts":["The switch leg","The neutral","The always-hot feed","The interconnect"],"a":2},{"s":"Switch receptacle wiring","q":"In a switch loop using 14/2, the white conductor at the switch must be:","opts":["Connected directly to the neutral bar","Re-identified as a hot conductor by marking it and used as the switch leg","Left unconnected and capped","Spliced with the red wire"],"a":1},{"s":"Switch receptacle wiring","q":"In a switch loop using 14/2, the white wire at the receptacle box is:","opts":["The switch leg back to the switch","Spliced in with the hot conductors feeding the receptacle via pigtail","Connected directly to the neutral terminal","Capped and left unused"],"a":1},{"s":"Switch receptacle wiring","q":"In a switch loop using 14/2, what happens to the black conductor at the receptacle box?","opts":["It is capped and unused","It connects to the neutral terminal","It is the switch leg and is bent over","It is spliced with the white conductor"],"a":2},{"s":"Switch receptacle wiring","q":"How is the switch leg identified in a dimmer switch box?","opts":["A piece of tape is wrapped around it","The tab is bent over","It is marked with a marker","It is left unconnected until trim"],"a":1},{"s":"Circuits & rough-in","q":"A garage receptacle circuit must be:","opts":["15-amp shared with exterior receptacles","20-amp dedicated circuit","15-amp dedicated circuit","20-amp shared with the kitchen"],"a":1},{"s":"Circuits & rough-in","q":"Exterior weatherproof receptacles require what type of device?","opts":["Standard duplex receptacle","Weather resistant (WR) rated receptacle","GFCI only — no WR rating needed","20-amp receptacle regardless of circuit size"],"a":1},{"s":"Circuits & rough-in","q":"On a horizontally mounted exterior receptacle, the in-use cover hinge should be installed on:","opts":["The bottom","The side","The top","Either side, no standard"],"a":2},{"s":"Circuits & rough-in","q":"On a vertically mounted exterior receptacle, the in-use cover hinge should be installed on:","opts":["The side","The top","The bottom","Either top or bottom"],"a":1},{"s":"Circuits & rough-in","q":"What do numbers written on a stud during rough-in typically signify?","opts":["The stud spacing","The circuit number","The inspector's reference code","The framing member size"],"a":1},{"s":"Wire ampacity","q":"For general purpose circuits, what is the ampacity of a 14 AWG conductor?","opts":["15 amps","20 amps","30 amps","10 amps"],"a":0},{"s":"Wire ampacity","q":"For general purpose circuits, what is the ampacity of a 12 AWG conductor?","opts":["15 amps","30 amps","20 amps","25 amps"],"a":2},{"s":"Wire ampacity","q":"For general purpose circuits, what is the ampacity of a 10 AWG conductor?","opts":["20 amps","40 amps","25 amps","30 amps"],"a":3},{"s":"Wire ampacity","q":"For general purpose circuits, what is the ampacity of an 8 AWG conductor?","opts":["30 amps","40 amps","50 amps","45 amps"],"a":1},{"s":"Wire ampacity","q":"For general purpose circuits, what is the ampacity of a 6 AWG conductor?","opts":["40 amps","45 amps","60 amps","50 amps"],"a":3},{"s":"Device installation","q":"What orientation should the ground be on an electric dryer receptacle?","opts":["Bottom","Left","Top","Right"],"a":2},{"s":"Nail plates","q":"A nail plate is required when a cable passes within 1-1/4\" of a finished surface. Which of the following would NOT require a nail plate?","opts":["Cable near drywall on an interior wall","Cable near exterior siding","Cable routed in a duct chase with no finished surface","Cable near a finished basement wall"],"a":2},{"s":"Nail plates","q":"What determines whether a nail plate is required at a drilled hole?","opts":["The number of cables through the hole","The size of the hole drilled","Proximity to a finished surface such as drywall or siding","The wire gauge being used"],"a":2},{"s":"Exterior penetrations — Quickflash","q":"When installing a Quickflash at an exterior penetration, what is the correct taping sequence?","opts":["Top first, then sides","All sides simultaneously","Bottom first, then sides, then top","Sides first, then top"],"a":3},{"s":"Exterior penetrations — Quickflash","q":"Why are the sides taped before the top on a Quickflash installation?","opts":["It is faster to do sides first","Code requires sides before top","Proper water management — top overlaps sides to shed water correctly","The adhesive bonds better in that order"],"a":2},{"s":"Disconnects — A/C & water heater","q":"On an A/C or water heater disconnect, LINE terminals are:","opts":["Where power goes out to the appliance","Where the ground wires terminate","Where incoming power to the disconnect is connected","Where the neutral connects"],"a":2},{"s":"Disconnects — A/C & water heater","q":"On an A/C or water heater disconnect, LOAD terminals are:","opts":["Where incoming power is connected","Where power goes out to the appliance","Where the ground wires terminate","Where the neutral connects only"],"a":1},{"s":"Disconnects — A/C & water heater","q":"What is the minimum clearance required to the left or right side of a disconnect?","opts":["24 inches","30 inches","36 inches","18 inches"],"a":1},{"s":"Disconnects — A/C & water heater","q":"What is the minimum clearance required directly in front of a disconnect?","opts":["30 inches","42 inches","24 inches","36 inches"],"a":3},{"s":"Doorbell wiring","q":"What wire is used for doorbell wiring?","opts":["14/2 NM cable","18/2 low voltage wire","Cat 6 cable","20/3 cable"],"a":3},{"s":"Doorbell wiring","q":"What is the correct wiring path for a doorbell system?","opts":["Button to transformer to chime","Chime to button to transformer","Transformer to chime to button","Button to chime only — no transformer needed"],"a":2},{"s":"Low voltage — WAP & data","q":"A wireless access point (WAP) requires what type of cable run to its location?","opts":["RG6 coaxial","20/3 doorbell wire","18/3 thermostat wire","Cat 6"],"a":3},{"s":"Low voltage — WAP & data","q":"What termination standard is used when punching down Cat 6 cable?","opts":["568A","568C","RJ11","568B"],"a":3},{"s":"Low voltage — WAP & data","q":"In the 568B RJ45 pin configuration, what color is pin 1, counting from the left?","opts":["Orange","Blue/White","Orange/White","Green/White"],"a":2},{"s":"Low voltage — WAP & data","q":"In the 568B RJ45 pin configuration, what color is pin 2, counting from the left?","opts":["Orange/White","Green","Orange","Blue"],"a":2},{"s":"Low voltage — WAP & data","q":"In the 568B RJ45 pin configuration, what color is pin 3, counting from the left?","opts":["Blue","Orange/White","Green","Green/White"],"a":3},{"s":"Low voltage — WAP & data","q":"In the 568B RJ45 pin configuration, counting from the left, pins 4 and 5 are:","opts":["Green and Green/White","Orange and Orange/White","Brown and Brown/White","Blue and Blue/White"],"a":3},{"s":"Low voltage — WAP & data","q":"In the 568B RJ45 pin configuration, what color is pin 6, counting from the left?","opts":["Blue","Brown","Green","Orange/White"],"a":2},{"s":"Low voltage — WAP & data","q":"In the 568B RJ45 pin configuration, counting from the left, pins 7 and 8 are:","opts":["Orange/White and Orange","Green/White and Green","Blue/White and Blue","Brown/White and Brown"],"a":3},{"s":"Surface mount fixtures","q":"Which of the following is a Level 2 surface mount fixture installation?","opts":["Chandelier with canopy","3-way switch-controlled track lighting","Semi-flush ceiling mount fixture","Recessed LED retrofit kit"],"a":2}],"oe":[{"s":"Switch receptacle wiring","q":"Explain how to wire a switch receptacle using the switch loop concept. Include which conductor is the switch leg, how it's identified, and how the receptacle box is wired.","guide":"Should describe: 14/2 cable run from switch to receptacle. At the switch, white is re-identified as hot (marked) and used as switch leg; black is the other switch leg conductor. At the receptacle box, black is the switch leg and is bent over; white is spliced with the hot conductors feeding the receptacle via pigtail."},{"s":"Switch receptacle wiring","q":"In a switch loop, what should be written on the cable at the receptacle box so whoever does the cut-in knows how to proceed?","guide":"Should indicate something to the effect of 'white = hot, black = switch' or equivalent — language that flags the wire colors are reversed from standard convention so the person cutting in doesn't default to normal color coding."},{"s":"Switch receptacle wiring","q":"In a switch loop, what should be written on the cable at the switch box?","guide":"Should indicate something like 'switched outlet' or equivalent — language that flags this is not a standard switch leg setup."},{"s":"GFCI troubleshooting","q":"You just finished wiring a GFCI receptacle in the garage. Two other receptacles downstream stop working. What did you most likely do wrong?","guide":"Should identify that the downstream receptacles were likely wired to the LINE terminals instead of the LOAD terminals, or the line/load were reversed, cutting off power to those devices entirely rather than just losing GFCI protection. Should demonstrate understanding that line/load mistakes cause functional failures, not just protection failures."},{"s":"Circuit labeling","q":"You find that the bathroom receptacles are labeled circuit 5 and the bedroom 2 receptacles are also labeled circuit 5. What do you do?","guide":"Should recognize this is a labeling conflict/error — two different areas cannot share the same circuit number unless intentionally on the same circuit, which would be unusual for bathroom and bedroom. Should describe verifying with the panel schedule or plan, and flagging the discrepancy to the foreman before proceeding, rather than guessing or proceeding with an assumption."},{"s":"Plan reading — detector placement","q":"Look at the floor plan provided. Identify where smoke detectors are required and where CO/smoke combo detectors are required.","guide":"Should identify smoke detectors inside each bedroom, and CO/smoke combo detectors on every floor and in the immediate vicinity outside bedrooms. Should be able to point to specific rooms/areas on the provided plan.","hasImage":true,"imageName":"second_floor_plan.png"},{"s":"Lighting & grounding","q":"A keyless fixture typically does not require a ground connection. If multiple cables are coming into that lighting junction box, what do you do with the ground wires?","guide":"Should explain that even though the fixture itself doesn't use a ground, the ground conductors from each cable must still be properly joined together (barrel crimp or wire nut) and pigtailed to maintain continuity of the grounding system through the box, even if no ground connects to the fixture itself."},{"s":"Self-verification","q":"How do you confirm your rough wiring is correct before moving on or calling for inspection?","guide":"Should describe a self-check process: verifying against the plan, confirming circuit labels match panel schedule, checking GFCI line/load is correct, confirming detector placement and wiring, checking switch loops and 3-way/4-way connections are correct, visually confirming nothing was missed room by room."},{"s":"Work method","q":"What is ZAM Electric's preferred method for wiring your circuits, and why?","guide":"Should describe working in a cyclical, consistent flow rather than jumping around the room or floor randomly. Should explain that a constant, predictable pattern makes it much easier to trace and isolate an issue later, since the technician knows roughly where in the sequence a problem is likely to be."}]},"L3":{"mc":[{"s":"A/C unit wiring","q":"When sizing the conductor for an A/C circuit, which value on the condenser data plate do you use?","opts":["Maximum Overcurrent Protection (MOCP)","Rated Load Amps (RLA)","Minimum Circuit Ampacity (MCA)","Locked Rotor Amps (LRA)"],"a":2},{"s":"A/C unit wiring","q":"When sizing the breaker for an A/C circuit, which value on the condenser data plate do you use?","opts":["Minimum Circuit Ampacity (MCA)","Maximum Overcurrent Protection (MOCP)","Rated Load Amps (RLA)","Full Load Amps (FLA)"],"a":1},{"s":"A/C unit wiring","q":"A condenser data plate shows an MCA of 18 amps and an MOCP of 30 amps. What conductor and breaker would you use?","opts":["10 AWG conductor, 20 amp breaker","14 AWG conductor, 30 amp breaker","12 AWG conductor, 30 amp breaker","12 AWG conductor, 20 amp breaker"],"a":2},{"s":"A/C unit wiring","q":"A condenser data plate shows an MCA of 24 amps and an MOCP of 40 amps. What conductor and breaker would you use?","opts":["10 AWG conductor, 40 amp breaker","8 AWG conductor, 30 amp breaker","12 AWG conductor, 40 amp breaker","10 AWG conductor, 30 amp breaker"],"a":0},{"s":"Lighting fixture installation","q":"What is the standard mounting height for a dining room chandelier (to bottom of fixture)?","opts":["6 feet 0 inches","5 feet 0 inches","5 feet 6 inches","6 feet 6 inches"],"a":2},{"s":"Lighting fixture installation","q":"What is the standard mounting height for a kitchen island pendant light (to bottom of fixture)?","opts":["5 feet 6 inches","5 feet 0 inches","6 feet 0 inches","4 feet 6 inches"],"a":0},{"s":"Lighting fixture installation","q":"What type of light fixture is required for installation inside a closet?","opts":["Standard incandescent open-bulb fixture","Any surface-mounted fixture","Enclosed fixture only","Pendant-style fixture only"],"a":2},{"s":"Lighting fixture installation","q":"What clearance is required between an enclosed closet light fixture and the edge of a shelf?","opts":["6 inches","18 inches","24 inches","12 inches"],"a":3},{"s":"Lighting fixture installation","q":"What is the maximum weight a standard bar box or 4-inch round nail-on box is rated to support?","opts":["35 pounds","50 pounds","75 pounds","20 pounds"],"a":1},{"s":"Lighting fixture installation","q":"A light fixture weighs 60 pounds. What type of box is required?","opts":["Standard bar box","4-inch round nail-on box","Fan-rated or heavy-duty rated box","Any box with a metal hanger bar"],"a":2},{"s":"Lighting fixture installation","q":"A two-story ceiling location requires a light prewire. What type of box is used?","opts":["Standard 4-inch round box","Fan-rated or heavy-duty rated box","Standard bar box","Single-gang box with extension ring"],"a":1},{"s":"3-way & 4-way switching","q":"In a standard (non-dead-end) 3-way switch box, how is the common conductor identified?","opts":["It is the red conductor","It is the stripped conductor","It is marked with tape","It is the unstripped conductor"],"a":1},{"s":"3-way & 4-way switching","q":"In a 14/3 cable used for 3-way switching, which two conductors are the travelers?","opts":["White and red","Black and white","Black and red","Red and ground"],"a":2},{"s":"3-way & 4-way switching","q":"At a dead-end 3-way switch location, which conductor becomes the common?","opts":["The red conductor","The black conductor","The white conductor","The bare ground conductor"],"a":2},{"s":"Switch layout convention","q":"In a bedroom with 4 recessed lights, a ceiling fan with light, and a switch receptacle, what is the correct switch order from closest to the door?","opts":["Ceiling fan, ceiling fan light, recessed lights, switch receptacle","Switch receptacle, recessed lights, ceiling fan light, ceiling fan","Recessed lights, ceiling fan light, ceiling fan, switch receptacle","Ceiling fan light, recessed lights, switch receptacle, ceiling fan"],"a":2},{"s":"Switch layout convention","q":"In a bathroom with vanity lighting, room lighting, shower/tub lighting, and an exhaust fan with light, what is the correct switch order from closest to the door?","opts":["Exhaust fan light, exhaust fan, vanity, room, shower/tub","Vanity, room, shower/tub, exhaust fan light, exhaust fan","Room, vanity, exhaust fan light, exhaust fan, shower/tub","Shower/tub, vanity, room, exhaust fan, exhaust fan light"],"a":1},{"s":"Multi-circuit switch boxes","q":"When two different circuits land in the same switch box, what is the correct way to group the conductors?","opts":["All hots and neutrals can be grouped together regardless of circuit","Neutrals and hots for each circuit must be grouped separately by circuit","Only the grounds need to be kept separate by circuit","Grouping does not matter as long as polarity is correct"],"a":1},{"s":"Panel & protection","q":"What is the maximum height a circuit breaker handle (in the on position) can be from the floor?","opts":["6 feet 0 inches","7 feet 0 inches","6 feet 7 inches","6 feet 3 inches"],"a":2}],"oe":[{"s":"Lighting fixture installation","q":"When installing a chain-hung chandelier, what do you confirm before considering the installation complete?","guide":"Should include: the chain (not the fixture's electrical cable/cord) is bearing the weight of the fixture, the cable has slack and is not load-bearing, the fixture is mounted at the correct height per the job's specifications, and the fixture hangs level."},{"s":"Fixture selection process","q":"How do you determine which fixture type goes in a given location? Walk through your process.","guide":"Should identify going into OneNote and checking the files and notations for that job — selection sheets and plan notes are the source of truth. 'Ask the foreman' is not an acceptable answer. Should demonstrate understanding that the information exists in the system and it's the technician's responsibility to find it."},{"s":"3-way & 4-way switching","q":"Explain how a dead-end 3-way switch is wired. What changes about conductor identification compared to a standard 3-way location?","guide":"Known: white conductor becomes the common at the dead-end location (re-identified since no separate common conductor is available at that point in the run); black and red remain travelers. Should describe what makes it a dead-end (power does not continue past this switch) and why white must be pressed into service as the common."},{"s":"3-way & 4-way switching","q":"What do you label 3-way wiring at the switch box so the next person knows how to cut it in? Give an example.","guide":"Should demonstrate understanding of what information needs to be communicated — identifying the common (often the stripped conductor or noted directly) and the two travelers. Not looking for one exact phrase — looking for evidence the labeling prevents guesswork for whoever finishes the box."},{"s":"Multi-circuit switch boxes","q":"You find two AFCI circuits sharing a switch box, and all the neutrals from both circuits have been grouped together rather than kept separate by circuit. What is the likely result and why?","guide":"Should explain that AFCI protection relies on monitoring the matched hot/neutral pair for that specific circuit. Mixing neutrals across circuits can cause nuisance tripping, failure to trip when it should, or general malfunction of AFCI protection since the breaker can no longer correctly correlate current on its hot conductor with the correct neutral return."},{"s":"Troubleshooting","q":"An exterior receptacle is not working. What are some common causes you would check?","guide":"Should include: tripped GFCI (possibly at an upstream receptacle), tripped breaker, loose or failed connection, moisture intrusion, in-use cover not sealing properly, or a wiring fault. Should reflect a logical troubleshooting sequence."},{"s":"Troubleshooting","q":"You are testing interconnected smoke and CO detectors and only some units go into alarm mode when the test button is pressed. What might be causing this?","guide":"Should identify a broken, miswired, or disconnected interconnect (red) conductor somewhere in the run preventing the signal from reaching all units. Could also mention a bad detector unit, loose connection at a box, or a unit not tied into the same interconnected run."},{"s":"Troubleshooting","q":"You encounter a switch receptacle that remains hot regardless of whether the switch is on or off. What is the most likely cause?","guide":"Should identify that the wrong tab was broken (neutral broken instead of hot, or hot tab never broken at all), allowing the always-hot side to bypass the switch entirely. Could also mention the switch leg landing on the wrong terminal."},{"s":"Wiring protection","q":"What is required for wiring run inside or through kitchen cabinets, and why?","guide":"Should identify that wiring must be protected by an approved method such as MC cable, sealtite, or conduit — not run as exposed NM/Romex. Should explain this is because cabinet interiors are subject to physical damage from normal use (drawers, stored items, etc.)."},{"s":"Lighting layout & measurement","q":"Look at the room layout provided showing 4 recessed lights and a ceiling fan. Describe your process for measuring and laying out this fixture placement.","guide":"Looking for the PROCESS, not exact dimensions: measure overall room dimensions, find center point of the room for the ceiling fan, evenly divide remaining space to place recessed lights symmetrically. Full marks for a logical, repeatable method even if exact numbers are approximate.","hasImage":true,"imageName":"room_layout_4_recessed_fan.png"}]},"L4":{"mc":[{"s":"Bonding & grounding","q":"In the main service disconnect, the bonding screw should be:","opts":["Left out","Installed in the ground bar only","Installed — connecting neutral bar to enclosure","— Removed —"],"a":2,"removedOpts":[3]},{"s":"Bonding & grounding","q":"In a sub-panel, the bonding screw between the neutral bar and the enclosure should be:","opts":["Installed and tightened","Installed but left loose","Painted to prevent corrosion","Removed or left out"],"a":3},{"s":"Bonding & grounding","q":"What is the minimum spacing required between two ground rods?","opts":["3 feet","8 feet","4 feet","6 feet"],"a":3},{"s":"Bonding & grounding","q":"Service entrance conductors for residential installations are typically what material?","opts":["Copper only","Steel-jacketed copper","Tinned copper only","Aluminum — URD or SER cable"],"a":3},{"s":"Bonding & grounding","q":"Grounding electrode conductors for residential services are typically what material?","opts":["Aluminum","Tinned steel","Either copper or aluminum","Copper"],"a":3},{"s":"Inter-system bonding","q":"Per 2023 NEC, what size copper conductor is used for inter-system bonding?","opts":["#10 copper","#8 copper","#4 copper","#6 copper"],"a":3},{"s":"Working space requirements","q":"What is the minimum clear working space required in front of an electrical panel?","opts":["24 inches","30 inches","42 inches","36 inches"],"a":3},{"s":"Working space requirements","q":"What is the minimum width of working space required at an electrical panel?","opts":["18 inches","24 inches","30 inches","36 inches"],"a":2},{"s":"Working space requirements","q":"What is the maximum height a circuit breaker handle (in the on position) can be from the floor?","opts":["6 feet 0 inches","6 feet 3 inches","7 feet 0 inches","6 feet 7 inches"],"a":3},{"s":"Box fill calculations","q":"What is the cubic inch value of a 14 AWG conductor for box fill calculation purposes?","opts":["1.75 cubic inches","2.25 cubic inches","2.50 cubic inches","2.00 cubic inches"],"a":3},{"s":"Box fill calculations","q":"What is the cubic inch value of a 12 AWG conductor for box fill calculation purposes?","opts":["2.00 cubic inches","2.25 cubic inches","2.50 cubic inches","1.75 cubic inches"],"a":1},{"s":"Box fill calculations","q":"What is the cubic inch value of a 10 AWG conductor for box fill calculation purposes?","opts":["2.00 cubic inches","2.25 cubic inches","3.00 cubic inches","2.50 cubic inches"],"a":3},{"s":"Box fill calculations","q":"Per 2020/2023 NEC, you have six 14 AWG ground conductors in a box. What is their total cubic inch allowance?","opts":["2.00 cubic inches","2.50 cubic inches","4.00 cubic inches","3.00 cubic inches"],"a":3},{"s":"Box fill calculations","q":"A box contains the following NM cable conductors: two 12 AWG hots, two 12 AWG neutrals, and two 12 AWG grounds. What is the total cubic inch fill for these conductors?","opts":["9.00 cubic inches","11.25 cubic inches","13.50 cubic inches","10.50 cubic inches"],"a":1},{"s":"Circuit sizing","q":"A 6 AWG NM cable used for an EV charger circuit is rated for how many amps?","opts":["30 amps","40 amps","60 amps","50 amps"],"a":3}],"oe":[{"s":"Bonding & grounding — scenario 1","q":"On a single family home, the meter base feeds the main service disconnect which feeds the main panel. Where is the main bonding jumper installed? Describe what happens at each piece of equipment in the system regarding the bonding jumper and the relationship between the neutral and ground conductors.","guide":"No rigid right/wrong — looking for: bonding jumper at the main service disconnect. At the main panel downstream: neutral and ground kept separate, bonding screw NOT installed. Only one bonding point in the system."},{"s":"Bonding & grounding — scenario 2","q":"A townhome development has a 4-position meter stack. Each meter feeds an emergency disconnect, and each emergency disconnect feeds a dwelling panel. Where is the main bonding jumper installed? Describe what happens at each piece of equipment — the meter stack, each emergency disconnect, and each dwelling panel — in regard to bonding jumpers and the neutral and ground conductors.","guide":"No rigid right/wrong — looking for: main bonding jumper at the meter stack. At each emergency disconnect: neutral and ground separate, no bonding jumper. At each dwelling panel: neutral and ground separate, bonding screw NOT installed. One bonding point for the entire system."},{"s":"Bonding & grounding — 200A service","q":"Describe what is needed for a 200 amp underground residential service on a single family home for 2020/2023 NEC compliance. Include service conductors, service entrance conductors, and the grounding system.","guide":"No rigid right/wrong — looking for: aluminum URD underground service conductors, SER or SEU aluminum service entrance conductors, copper GEC, two ground rods minimum spaced 6 feet apart, inter-system bonding termination with #6 copper."},{"s":"Breaker-level protection — finished basement (2020/2023 NEC)","q":"Per 2020/2023 NEC, what type of protection is required for the various components of a finished basement? For each component, describe how that protection can be achieved.","guide":"No rigid right/wrong — looking for: finished basement receptacles require AFCI and GFCI (dual function breaker or combination). Finished basement lighting requires AFCI. Should describe that protection can be at the breaker, device, or combination."},{"s":"Breaker-level protection — laundry room (2020/2023 NEC)","q":"Per 2020/2023 NEC, what type of protection is required for laundry room circuits? Include the 120V receptacle circuits, the lighting circuit, and the electric dryer circuit specifically. Describe how each can be achieved.","guide":"No rigid right/wrong — looking for: 120V laundry receptacles = AFCI + GFCI. Laundry lighting = AFCI. Electric dryer (250V) = GFCI only (no AFCI on 240V circuits). Different requirement for 120V vs 250V."},{"s":"Breaker-level protection — kitchen (2023 NEC)","q":"Per 2023 NEC, what type of protection is required for kitchen circuits? Include 120V receptacle circuits, 250V receptacle circuits, kitchen lighting, and hardwired appliances. Describe how each can be achieved.","guide":"No rigid right/wrong — looking for: 120V kitchen receptacles = AFCI + GFCI. 250V kitchen receptacles = GFCI. Kitchen lighting = AFCI. Hardwired appliances (dishwasher, disposal) = GFCI per 2023 NEC. Should show awareness that 2023 NEC expanded GFCI to certain hardwired appliances."},{"s":"Panel work","q":"Explain when a breaker lock is required and give at least two examples of installations where you would install one.","guide":"No rigid right/wrong — looking for evidence they understand breaker locks keep specific breakers in the ON or OFF position as required by equipment or code. Examples: A/C breaker required to stay on, equipment requiring breaker locked off during service, or other code-required lockout scenarios."},{"s":"Box fill calculations","q":"A junction box contains the following NM cables: two 12/2 cables and one 12/3 cable. Calculate the total cubic inch fill per 2023 NEC.","guide":"No rigid right/wrong — looking for: they correctly identify all conductors from each cable (12/2 = 1 hot, 1 neutral, 1 ground each; 12/3 = 2 hots, 1 neutral, 1 ground). Total current-carrying: 7 × 2.25 = 15.75. Grounds: 3 total, under 4 so count as 1 full allowance at 2.25. Total = 18.00 cu in. Looking for logical work showing they account for all conductors including grounds."},{"s":"Troubleshooting","q":"You are called back to a completed dwelling for a warranty issue. Three receptacles in the master bedroom are not working but the breaker is not tripped. Walk through your complete diagnostic process.","guide":"No rigid right/wrong — looking for logical sequence: check for tripped GFCI upstream, verify breaker fully reset, check for loose connections at receptacles, check wiring at junction points, verify circuit labeling. Depth and logic reflects L4 competency."},{"s":"Troubleshooting","q":"A homeowner reports their AFCI breaker trips repeatedly but only when a specific appliance is used. What are the possible causes and how would you approach diagnosing this?","guide":"No rigid right/wrong — looking for: appliance generating arc fault signatures, loose connection stressed under load, shared neutral from crossed circuits, legitimate arc fault in wiring only under load. Should describe logical diagnostic approach."},{"s":"Code knowledge — ground conductor box fill rule","q":"Per 2020/2023 NEC, what is the rule for counting ground conductors in a box fill calculation? What is the cubic inch rating for eight #12 AWG ground conductors?","guide":"No rigid right/wrong — looking for: first 4 grounds = 1 full volume allowance at largest ground conductor gauge. Each ground beyond 4 = 1/4 volume allowance. Eight 12 AWG grounds: first 4 = 2.25, remaining 4 = 4 × (2.25 × 0.25) = 2.25. Total = 4.50 cu in."},{"s":"Working space requirements","q":"Describe the working space requirements around an electrical panel per NEC. What are the minimum dimensions and what cannot be in that space?","guide":"No rigid right/wrong — looking for: 36 inches clear depth in front, 30 inches wide minimum, 6'6\" headroom. Space must remain clear of storage, pipes, other equipment. Breaker handles cannot exceed 6'7\" from floor in the on position."}]}};
+const ADMIN_PASSWORD = 'ZAM2025!';
+const OE_COUNTS = {1:5, 2:5, 3:7, 4:10};
+const MC_COUNTS = {1:20, 2:20, 3:20, 4:15};
+const PASS_THRESHOLD = 0.75;
+const TIMER_SECONDS = 40;
+
+let state = {
+  empName:'', level:null,
+  mcQuestions:[], oeQuestions:[],
+  current:0, phase:'mc',
+  mcAnswers:[], oeAnswers:[],
+  timerInterval:null, timeLeft:0, answered:false
+};
+
+// PIN STORAGE
+function getPins() { try { return JSON.parse(localStorage.getItem('zam_pins')||'[]'); } catch(e){return[];} }
+function savePins(p) { localStorage.setItem('zam_pins', JSON.stringify(p)); }
+
+function generatePin() {
+  const name = document.getElementById('admin-emp-name').value.trim();
+  if (!name) { alert('Enter employee name.'); return; }
+  const level = parseInt(document.getElementById('admin-level').value);
+  const pin = (Math.random().toString(36).substr(2,6)).toUpperCase();
+  const pins = getPins();
+  pins.push({pin, name, level, created: new Date().toISOString(), used:false});
+  savePins(pins);
+  document.getElementById('new-pin-value').textContent = pin;
+  document.getElementById('new-pin-display').style.display = 'block';
+  renderPinList();
+}
+
+function renderPinList() {
+  const pins = getPins();
+  const el = document.getElementById('pin-list');
+  if (!pins.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">No PINs yet.</p>'; return; }
+  el.innerHTML = [...pins].reverse().map(p=>`
+    <div class="pin-row">
+      <div>
+        <div class="pin-code">${p.pin}</div>
+        <div class="pin-meta">${p.name} &middot; L${p.level} &middot; ${new Date(p.created).toLocaleDateString()}</div>
+      </div>
+      <span class="pin-status ${p.used?'used':'unused'}">${p.used?'Used':'Unused'}</span>
+    </div>
+  `).join('');
+}
+
+function validatePin(val) {
+  const pins = getPins();
+  return pins.findIndex(p => p.pin === val.toUpperCase() && !p.used);
+}
+
+function getPinData(val) {
+  return getPins().find(p => p.pin === val.toUpperCase());
+}
+
+function markPinUsed(val) {
+  const pins = getPins();
+  const idx = pins.findIndex(p => p.pin === val.toUpperCase());
+  if (idx >= 0) { pins[idx].used = true; savePins(pins); }
+}
+
+// SCREENS
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// PIN SCREEN
+function checkPinReady() {
+  const ok = document.getElementById('emp-name').value.trim() &&
+             document.getElementById('pin-input').value.trim().length >= 4;
+  document.getElementById('pin-btn').disabled = !ok;
+}
+
+function startFromPin() {
+  const pinVal = document.getElementById('pin-input').value.trim().toUpperCase();
+  const idx = validatePin(pinVal);
+  if (idx < 0) { document.getElementById('pin-error').style.display='block'; return; }
+  document.getElementById('pin-error').style.display='none';
+  state.empName = document.getElementById('emp-name').value.trim();
+  const pinData = getPinData(pinVal);
+  markPinUsed(pinVal);
+  document.getElementById('level-sub').textContent = state.empName;
+  showScreen('screen-level');
+  // Pre-select the level from PIN if available
+  if (pinData && pinData.level) selectLevel(pinData.level);
+}
+
+// LEVEL SCREEN
+let selectedLevel = null;
+function selectLevel(l) {
+  selectedLevel = l;
+  document.querySelectorAll('.level-btn').forEach((b,i)=>b.classList.toggle('selected',i===l-1));
+  document.getElementById('level-btn').disabled = false;
+}
+
+function confirmLevel() {
+  if (!selectedLevel) return;
+  state.level = selectedLevel;
+  buildQuestionSets();
+  startAssessment();
+}
+
+// BUILD QUESTION SETS — TB always included
+function shuffle(arr) { return arr.slice().sort(()=>Math.random()-0.5); }
+
+function buildQuestionSets() {
+  const key = 'L' + state.level;
+  const allMC = QUESTIONS[key].mc;
+  const allOE = QUESTIONS[key].oe;
+  state.mcQuestions = shuffle(allMC).slice(0, Math.min(MC_COUNTS[state.level], allMC.length));
+  state.oeQuestions = shuffle(allOE).slice(0, Math.min(OE_COUNTS[state.level], allOE.length));
+  state.mcAnswers = new Array(state.mcQuestions.length).fill(null);
+  state.oeAnswers = new Array(state.oeQuestions.length).fill('');
+  state.current = 0;
+  state.phase = 'mc';
+}
+
+// ASSESSMENT
+function startAssessment() {
+  showScreen('screen-question');
+  document.getElementById('q-header-name').textContent = state.empName + ' — Level ' + state.level;
+  showCurrentQuestion();
+}
+
+function totalQ() { return state.mcQuestions.length + state.oeQuestions.length; }
+function overallIdx() { return state.phase==='mc' ? state.current : state.mcQuestions.length + state.current; }
+
+function showCurrentQuestion() {
+  state.answered = false;
+  const pct = overallIdx() / totalQ() * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('q-count').textContent = 'Question ' + (overallIdx()+1) + ' of ' + totalQ();
+  if (state.phase === 'mc') showMC(); else showOE();
+}
+
+function showMC() {
+  const q = state.mcQuestions[state.current];
+  document.getElementById('mc-area').classList.remove('hidden');
+  document.getElementById('oe-area').classList.add('hidden');
+  document.getElementById('timer-display').style.display = '';
+  const badge = document.getElementById('q-type-badge');
+  badge.textContent = 'Multiple choice';
+  badge.style.cssText = 'background:var(--blue-light);color:var(--blue);';
+  document.getElementById('section-tag').textContent = q.s;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('feedback-box').className = 'feedback hidden';
+  document.getElementById('next-btn').disabled = true;
+  document.getElementById('next-btn').textContent = 'Next question';
+
+  const shuffled = q.opts.map((text,i)=>({text,orig:i})).sort(()=>Math.random()-0.5);
+  q._shuffled = shuffled;
+
+  const opts = document.getElementById('options-list');
+  opts.innerHTML = '';
+  ['A','B','C','D'].forEach((letter,idx) => {
+    const opt = shuffled[idx];
+    const isRemoved = q.removedOpts && q.removedOpts.includes(opt.orig);
+    const div = document.createElement('div');
+    div.className = 'opt' + (isRemoved?' removed':'');
+    div.innerHTML = `<div class="opt-letter">${letter}</div><div class="opt-text">${opt.text}</div>`;
+    if (!isRemoved) div.onclick = () => selectAnswer(idx, opt.orig, div, shuffled, q.a);
+    opts.appendChild(div);
+  });
+
+  startTimer();
+}
+
+function showOE() {
+  const q = state.oeQuestions[state.current];
+  document.getElementById('mc-area').classList.add('hidden');
+  document.getElementById('oe-area').classList.remove('hidden');
+  document.getElementById('timer-display').style.display = 'none';
+  const badge = document.getElementById('q-type-badge');
+  badge.textContent = 'Open-ended';
+  badge.style.cssText = 'background:var(--green-light);color:var(--green);';
+  document.getElementById('section-tag').textContent = q.s;
+  document.getElementById('oe-text').textContent = q.q;
+  document.getElementById('oe-answer').value = state.oeAnswers[state.current] || '';
+  document.getElementById('next-btn').disabled = false;
+  const isLast = state.current >= state.oeQuestions.length - 1;
+  document.getElementById('next-btn').textContent = isLast ? 'Submit assessment' : 'Next question';
+  clearInterval(state.timerInterval);
+}
+
+function startTimer() {
+  clearInterval(state.timerInterval);
+  state.timeLeft = TIMER_SECONDS;
+  updateTimer();
+  state.timerInterval = setInterval(()=>{
+    state.timeLeft--;
+    updateTimer();
+    if (state.timeLeft<=0) { clearInterval(state.timerInterval); autoSkip(); }
+  }, 1000);
+}
+
+function updateTimer() {
+  const el = document.getElementById('timer-display');
+  el.textContent = state.timeLeft + 's';
+  el.classList.toggle('warn', state.timeLeft<=10);
+}
+
+function autoSkip() {
+  if (state.answered) return;
+  state.answered = true;
+  state.mcAnswers[state.current] = -1;
+  const q = state.mcQuestions[state.current];
+  const ci = q._shuffled.findIndex(o=>o.orig===q.a);
+  document.getElementById('options-list').children[ci].classList.add('correct');
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback timeout';
+  fb.textContent = "Time's up — correct answer highlighted.";
+  document.getElementById('next-btn').disabled = false;
+}
+
+function selectAnswer(idx, origIdx, div, shuffled, correctOrig) {
+  if (state.answered) return;
+  state.answered = true;
+  clearInterval(state.timerInterval);
+  state.mcAnswers[state.current] = origIdx;
+  const correct = origIdx === correctOrig;
+  div.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    const ci = shuffled.findIndex(o=>o.orig===correctOrig);
+    document.getElementById('options-list').children[ci].classList.add('correct');
+  }
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback ' + (correct?'correct':'wrong');
+  fb.textContent = correct ? 'Correct.' : 'Incorrect — correct answer highlighted.';
+  document.getElementById('next-btn').disabled = false;
+}
+
+function nextQuestion() {
+  if (state.phase === 'oe') {
+    state.oeAnswers[state.current] = document.getElementById('oe-answer').value.trim();
+  }
+  state.current++;
+  if (state.phase === 'mc' && state.current >= state.mcQuestions.length) {
+    state.phase = 'oe'; state.current = 0;
+  }
+  if (state.phase === 'oe' && state.current >= state.oeQuestions.length) {
+    showResults(); return;
+  }
+  showCurrentQuestion();
+}
+
+// RESULTS
+function showResults() {
+  clearInterval(state.timerInterval);
+  showScreen('screen-result');
+  document.getElementById('result-sub-header').textContent = state.empName + ' — Level ' + state.level;
+
+  const total = state.mcQuestions.length;
+  let correct = 0;
+  const bySection = {};
+  state.mcQuestions.forEach((q,i) => {
+    const ok = state.mcAnswers[i] === q.a;
+    if (ok) correct++;
+    if (!bySection[q.s]) bySection[q.s] = {correct:0,total:0};
+    bySection[q.s].total++;
+    if (ok) bySection[q.s].correct++;
+  });
+
+  const pct = Math.round(correct/total*100);
+  const pass = pct >= PASS_THRESHOLD * 100;
+
+  document.getElementById('score-circle').className = 'score-circle ' + (pass?'pass':'fail');
+  const pctEl = document.getElementById('score-pct');
+  pctEl.className = 'score-pct ' + (pass?'pass':'fail');
+  pctEl.textContent = pct + '%';
+  document.getElementById('result-title').textContent = pass ? 'Multiple choice passed' : 'Multiple choice not passed';
+  document.getElementById('result-sub').textContent = pass
+    ? 'Review the open-ended responses below before confirming advancement.'
+    : state.empName + ' did not reach 75% on multiple choice. Review open-ended responses before making a final determination.';
+
+  // Breakdown
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = '';
+  Object.entries(bySection).forEach(([sec,d])=>{
+    const sp = Math.round(d.correct/d.total*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML = `<span class="breakdown-section">${sec}</span><span class="breakdown-score ${sp>=75?'good':'bad'}">${d.correct}/${d.total} (${sp}%)</span>`;
+    bd.appendChild(row);
+  });
+
+  // OE review
+  if (state.oeQuestions.length > 0) {
+    document.getElementById('oe-pending-box').style.display = 'block';
+    document.getElementById('oe-review-card').style.display = 'block';
+    const list = document.getElementById('oe-review-list');
+    list.innerHTML = state.oeQuestions.map((q,i)=>`
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Q${i+1} — ${q.s}</div>
+        <div style="font-size:14px;font-weight:500;margin-bottom:8px;line-height:1.5">${q.q}</div>
+        <div style="font-size:14px;color:var(--dark);background:var(--bg);border-radius:8px;padding:10px 14px;line-height:1.6">${state.oeAnswers[i]||'<em style="color:var(--muted)">No answer provided.</em>'}</div>
+      </div>
+    `).join('');
+  }
+
+  // Summary
+  const date = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const weak = Object.entries(bySection).filter(([,d])=>Math.round(d.correct/d.total*100)<75).map(([s])=>s);
+  let notif = `<strong>${state.empName}</strong> — Level ${state.level} assessment completed ${date}. MC score: <strong>${pct}% (${correct}/${total})</strong> — `;
+  notif += pass
+    ? `<strong style="color:var(--green)">PASSED</strong>. Open-ended responses above require review before final advancement is confirmed.`
+    : `<strong style="color:var(--red)">DID NOT PASS</strong>. Remains at current level.`;
+  if (!pass && weak.length) notif += ` Focus areas before retesting: <strong>${weak.join(', ')}</strong>.`;
+  document.getElementById('notif-text').innerHTML = notif;
+
+  // Send email with results
+  sendResultsEmail(
+    state.empName,
+    state.level,
+    date,
+    correct,
+    total,
+    pct,
+    pass,
+    weak,
+    state.oeQuestions,
+    state.oeAnswers
+  );
+}
+
+
+function sendResultsEmail(name, level, date, mcScore, mcTotal, pct, pass, weakSections, oeQuestions, oeAnswers) {
+  const oeText = oeQuestions.map((q,i) => 
+    'Q' + (i+1) + ': ' + q.q + '
+
+Answer: ' + (oeAnswers[i] || '(no answer provided)') + '
+
+---'
+  ).join('
+
+');
+
+  const params = {
+    employee_name: name,
+    level: 'L' + level,
+    date: date,
+    mc_score: mcScore + '/' + mcTotal + ' (' + pct + '%)',
+    result: pass ? 'PASSED' : 'DID NOT PASS',
+    weak_areas: weakSections.length ? weakSections.join(', ') : 'None',
+    oe_responses: oeText || 'No open-ended questions in this session.'
+  };
+
+  emailjs.send('zam_assessment', 'template_9bxqgyy', params)
+    .then(() => console.log('Results emailed successfully.'))
+    .catch(err => console.error('Email failed:', err));
+}
+
+function resetApp() {
+  state = { empName:'', level:null, mcQuestions:[], oeQuestions:[], current:0, phase:'mc', mcAnswers:[], oeAnswers:[], timerInterval:null, timeLeft:0, answered:false };
+  selectedLevel = null;
+  document.getElementById('emp-name').value = '';
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-btn').disabled = true;
+  document.getElementById('pin-error').style.display = 'none';
+  document.getElementById('oe-pending-box').style.display = 'none';
+  document.getElementById('oe-review-card').style.display = 'none';
+  showScreen('screen-pin');
+}
+
+// ADMIN
+function showAdmin() { showScreen('screen-admin'); }
+function adminLogin() {
+  if (document.getElementById('admin-pw').value === ADMIN_PASSWORD) {
+    document.getElementById('admin-login-card').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('admin-error').style.display = 'none';
+    renderPinList();
+  } else {
+    document.getElementById('admin-error').style.display = 'block';
+  }
+}
+function adminLogout() {
+  document.getElementById('admin-login-card').style.display = 'block';
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('admin-pw').value = '';
+}
+</script>
+</body>
+</html>
