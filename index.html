@@ -574,14 +574,8 @@ function showResults() {
 
 function sendResultsEmail(name, level, date, mcScore, mcTotal, pct, pass, weakSections, oeQuestions, oeAnswers) {
   const oeText = oeQuestions.map((q,i) => 
-    'Q' + (i+1) + ': ' + q.q + '
-
-Answer: ' + (oeAnswers[i] || '(no answer provided)') + '
-
----'
-  ).join('
-
-');
+    'Q' + (i+1) + ': ' + q.q + '\n\nAnswer: ' + (oeAnswers[i] || '(no answer provided)') + '\n\n---'
+  ).join('\n\n');
 
   const params = {
     employee_name: name,
