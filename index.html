@@ -668,10 +668,8 @@ function showResults() {
   const pctEl = document.getElementById('score-pct');
   pctEl.className = 'score-pct ' + (pass?'pass':'fail');
   pctEl.textContent = pct + '%';
-  document.getElementById('result-title').textContent = pass ? 'Multiple choice passed' : 'Multiple choice not passed';
-  document.getElementById('result-sub').textContent = pass
-    ? 'Review the open-ended responses below before confirming advancement.'
-    : state.empName + ' did not reach 75% on multiple choice. Review open-ended responses before making a final determination.';
+  document.getElementById('result-title').textContent = correct + ' of ' + total + ' correct';
+  document.getElementById('result-sub').textContent = 'Open-ended responses are below. Full results, including those responses, have been sent to your supervisor for review.';
 
   // Breakdown
   const bd = document.getElementById('breakdown');
@@ -701,11 +699,9 @@ function showResults() {
   // Summary
   const date = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const weak = Object.entries(bySection).filter(([,d])=>Math.round(d.correct/d.total*100)<75).map(([s])=>s);
-  let notif = `<strong>${state.empName}</strong> — ${levelLabel(state.level)} assessment completed ${date}. MC score: <strong>${pct}% (${correct}/${total})</strong> — `;
-  notif += pass
-    ? `<strong style="color:var(--green)">PASSED</strong>. Open-ended responses above require review before final advancement is confirmed.`
-    : `<strong style="color:var(--red)">DID NOT PASS</strong>. Remains at current level.`;
-  if (!pass && weak.length) notif += ` Focus areas before retesting: <strong>${weak.join(', ')}</strong>.`;
+  let notif = `<strong>${state.empName}</strong> — ${levelLabel(state.level)} assessment completed ${date}. Multiple choice: <strong>${correct} of ${total} correct (${pct}%)</strong>. `;
+  notif += `Open-ended responses above require review before a final advancement decision.`;
+  if (weak.length) notif += ` Lower-scoring areas: <strong>${weak.join(', ')}</strong>.`;
   document.getElementById('notif-text').innerHTML = notif;
 
   // Send email with results
