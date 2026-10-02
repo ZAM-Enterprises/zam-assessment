@@ -109,7 +109,43 @@
 <body>
 
 <!-- PIN ENTRY -->
-<div class="screen active" id="screen-pin">
+<div class="screen active" id="screen-home">
+  <div class="app-header">
+    <div class="logo-box"><span>ZAM</span></div>
+    <div><div class="app-title">Skill Assessment</div><div class="app-sub">New Construction Division</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Get ready</div>
+    <p style="font-size:15px;line-height:1.6;margin-bottom:16px">This assessment checks what you should already know from your current skill level before moving on. Take your time on the open-ended questions and answer honestly, this is here to help you and ZAM make sure you are set up to succeed at the next level.</p>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">How it works</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:9px">
+        <li style="font-size:14px;line-height:1.5;display:flex;gap:8px"><span style="color:var(--red);font-weight:700">&bull;</span><span>Multiple choice questions give you <strong>90 seconds each</strong>. If time runs out, the question is marked and the test moves on, so keep moving.</span></li>
+        <li style="font-size:14px;line-height:1.5;display:flex;gap:8px"><span style="color:var(--red);font-weight:700">&bull;</span><span>Open-ended questions have <strong>no time limit</strong>. Explain your answer in your own words as if you were walking a coworker through it.</span></li>
+        <li style="font-size:14px;line-height:1.5;display:flex;gap:8px"><span style="color:var(--red);font-weight:700">&bull;</span><span>Each level pulls a mixed set of questions covering different topics, so the exact questions you see will vary.</span></li>
+        <li style="font-size:14px;line-height:1.5;display:flex;gap:8px"><span style="color:var(--red);font-weight:700">&bull;</span><span>You will need the PIN your supervisor gave you. It is tied to your name and assigned level, and can only be used once.</span></li>
+      </ul>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:4px 16px;margin-bottom:18px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:8px 4px;color:var(--muted);font-weight:600">Level</th>
+          <th style="text-align:center;padding:8px 4px;color:var(--muted);font-weight:600">Multiple choice</th>
+          <th style="text-align:center;padding:8px 4px;color:var(--muted);font-weight:600">Open-ended</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 4px">Level 1</td><td style="text-align:center;padding:8px 4px">30 questions</td><td style="text-align:center;padding:8px 4px">7 questions</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 4px">Level 2</td><td style="text-align:center;padding:8px 4px">30 questions</td><td style="text-align:center;padding:8px 4px">7 questions</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 4px">Level 3</td><td style="text-align:center;padding:8px 4px">20 questions</td><td style="text-align:center;padding:8px 4px">10 questions</td></tr>
+          <tr><td style="padding:8px 4px">Level 4</td><td style="text-align:center;padding:8px 4px">20 questions</td><td style="text-align:center;padding:8px 4px">15 questions</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn-primary" onclick="showScreen('screen-pin')">I'm ready, start</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-pin">
   <div class="app-header">
     <div class="logo-box"><span>ZAM</span></div>
     <div><div class="app-title">Skill Assessment</div><div class="app-sub">New Construction Division</div></div>
