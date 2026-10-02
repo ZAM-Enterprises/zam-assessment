@@ -279,6 +279,7 @@
           <option value="2">L2 — Developing Proficiency</option>
           <option value="3">L3 — Independent Tech</option>
           <option value="4">L4 — Lead Installer</option>
+          <option value="5">Comprehensive — L5 Candidate Review</option>
         </select>
       </div>
       <button class="btn-primary" onclick="generatePin()">Generate PIN</button>
@@ -304,6 +305,15 @@ const OE_COUNTS = {1:7, 2:7, 3:10, 4:15};
 const MC_COUNTS = {1:30, 2:30, 3:20, 4:20};
 const PASS_THRESHOLD = 0.75;
 const TIMER_SECONDS = 90;
+// Comprehensive review (Level 5 candidate check): pulls a sample from every
+// level's pool instead of one level, for employees being considered for a
+// foreman-track role who never tested sequentially through L1-L4.
+const COMPREHENSIVE_LEVEL = 5;
+const COMP_MC_PER_LEVEL = 8;
+const COMP_OE_PER_LEVEL = 3;
+function levelLabel(lvl) {
+  return lvl === COMPREHENSIVE_LEVEL ? 'Comprehensive Review (L1-L4)' : 'Level ' + lvl;
+}
 
 let state = {
   empName:'', level:null,
@@ -470,11 +480,22 @@ function drawVaried(pool, count) {
 }
 
 function buildQuestionSets() {
-  const key = 'L' + state.level;
-  const allMC = QUESTIONS[key].mc;
-  const allOE = QUESTIONS[key].oe;
-  state.mcQuestions = drawVaried(allMC, Math.min(MC_COUNTS[state.level], allMC.length));
-  state.oeQuestions = drawVaried(allOE, Math.min(OE_COUNTS[state.level], allOE.length));
+  if (state.level === COMPREHENSIVE_LEVEL) {
+    let allMC = [], allOE = [];
+    [1, 2, 3, 4].forEach(lvl => {
+      const key = 'L' + lvl;
+      allMC = allMC.concat(drawVaried(QUESTIONS[key].mc, Math.min(COMP_MC_PER_LEVEL, QUESTIONS[key].mc.length)));
+      allOE = allOE.concat(drawVaried(QUESTIONS[key].oe, Math.min(COMP_OE_PER_LEVEL, QUESTIONS[key].oe.length)));
+    });
+    state.mcQuestions = shuffle(allMC);
+    state.oeQuestions = shuffle(allOE);
+  } else {
+    const key = 'L' + state.level;
+    const allMC = QUESTIONS[key].mc;
+    const allOE = QUESTIONS[key].oe;
+    state.mcQuestions = drawVaried(allMC, Math.min(MC_COUNTS[state.level], allMC.length));
+    state.oeQuestions = drawVaried(allOE, Math.min(OE_COUNTS[state.level], allOE.length));
+  }
   state.mcAnswers = new Array(state.mcQuestions.length).fill(null);
   state.oeAnswers = new Array(state.oeQuestions.length).fill('');
   state.current = 0;
@@ -484,7 +505,7 @@ function buildQuestionSets() {
 // ASSESSMENT
 function startAssessment() {
   showScreen('screen-question');
-  document.getElementById('q-header-name').textContent = state.empName + ' — Level ' + state.level;
+  document.getElementById('q-header-name').textContent = state.empName + ' — ' + levelLabel(state.level);
   showCurrentQuestion();
 }
 
@@ -627,7 +648,7 @@ function nextQuestion() {
 function showResults() {
   clearInterval(state.timerInterval);
   showScreen('screen-result');
-  document.getElementById('result-sub-header').textContent = state.empName + ' — Level ' + state.level;
+  document.getElementById('result-sub-header').textContent = state.empName + ' — ' + levelLabel(state.level);
 
   const total = state.mcQuestions.length;
   let correct = 0;
@@ -680,7 +701,7 @@ function showResults() {
   // Summary
   const date = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const weak = Object.entries(bySection).filter(([,d])=>Math.round(d.correct/d.total*100)<75).map(([s])=>s);
-  let notif = `<strong>${state.empName}</strong> — Level ${state.level} assessment completed ${date}. MC score: <strong>${pct}% (${correct}/${total})</strong> — `;
+  let notif = `<strong>${state.empName}</strong> — ${levelLabel(state.level)} assessment completed ${date}. MC score: <strong>${pct}% (${correct}/${total})</strong> — `;
   notif += pass
     ? `<strong style="color:var(--green)">PASSED</strong>. Open-ended responses above require review before final advancement is confirmed.`
     : `<strong style="color:var(--red)">DID NOT PASS</strong>. Remains at current level.`;
@@ -710,7 +731,7 @@ function sendResultsEmail(name, level, date, mcScore, mcTotal, pct, pass, weakSe
 
   const params = {
     employee_name: name,
-    level: 'L' + level,
+    level: levelLabel(level),
     date: date,
     mc_score: mcScore + '/' + mcTotal + ' (' + pct + '%)',
     result: pass ? 'PASSED' : 'DID NOT PASS',
