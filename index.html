@@ -105,6 +105,19 @@
 <script type="text/javascript">
   (function(){ emailjs.init({ publicKey: 'ZBdUxg5SGDen1nN-1' }); })();
 </script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyAYhFM_uekNtbjKRBO1IpVZg5SsQMg8oyk",
+    authDomain: "zam-assessment.firebaseapp.com",
+    projectId: "zam-assessment",
+    storageBucket: "zam-assessment.firebasestorage.app",
+    messagingSenderId: "905031512038",
+    appId: "1:905031512038:web:83fea4c916b763ffffb027"
+  });
+  const db = firebase.firestore();
+</script>
 </head>
 <body>
 
@@ -300,28 +313,36 @@ let state = {
   timerInterval:null, timeLeft:0, answered:false
 };
 
-// PIN STORAGE
-function getPins() { try { return JSON.parse(localStorage.getItem('zam_pins')||'[]'); } catch(e){return[];} }
-function savePins(p) { localStorage.setItem('zam_pins', JSON.stringify(p)); }
+// PIN STORAGE (Firestore — shared across devices)
+const pinsCollection = db.collection('pins');
 
-function generatePin() {
+async function generatePin() {
   const name = document.getElementById('admin-emp-name').value.trim();
   if (!name) { alert('Enter employee name.'); return; }
   const level = parseInt(document.getElementById('admin-level').value);
   const pin = (Math.random().toString(36).substr(2,6)).toUpperCase();
-  const pins = getPins();
-  pins.push({pin, name, level, created: new Date().toISOString(), used:false});
-  savePins(pins);
-  document.getElementById('new-pin-value').textContent = pin;
-  document.getElementById('new-pin-display').style.display = 'block';
-  renderPinList();
+  const genBtn = document.querySelector('#admin-panel button[onclick="generatePin()"]');
+  genBtn.disabled = true;
+  try {
+    await pinsCollection.doc(pin).set({ pin, name, level, created: new Date().toISOString(), used: false });
+    document.getElementById('new-pin-value').textContent = pin;
+    document.getElementById('new-pin-display').style.display = 'block';
+    await renderPinList();
+  } catch (e) {
+    alert('Could not save PIN — check your connection and try again.');
+  } finally {
+    genBtn.disabled = false;
+  }
 }
 
-function renderPinList() {
-  const pins = getPins();
+async function renderPinList() {
   const el = document.getElementById('pin-list');
-  if (!pins.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">No PINs yet.</p>'; return; }
-  el.innerHTML = [...pins].reverse().map(p=>`
+  el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Loading…</p>';
+  const snap = await pinsCollection.orderBy('created', 'desc').get();
+  if (snap.empty) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">No PINs yet.</p>'; return; }
+  el.innerHTML = snap.docs.map(doc => {
+    const p = doc.data();
+    return `
     <div class="pin-row">
       <div>
         <div class="pin-code">${p.pin}</div>
@@ -329,22 +350,20 @@ function renderPinList() {
       </div>
       <span class="pin-status ${p.used?'used':'unused'}">${p.used?'Used':'Unused'}</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
-function validatePin(val) {
-  const pins = getPins();
-  return pins.findIndex(p => p.pin === val.toUpperCase() && !p.used);
-}
-
-function getPinData(val) {
-  return getPins().find(p => p.pin === val.toUpperCase());
-}
-
-function markPinUsed(val) {
-  const pins = getPins();
-  const idx = pins.findIndex(p => p.pin === val.toUpperCase());
-  if (idx >= 0) { pins[idx].used = true; savePins(pins); }
+// Reads the PIN and atomically marks it used in one transaction so two
+// employees racing the same PIN can't both get through.
+async function claimPin(val) {
+  const ref = pinsCollection.doc(val.toUpperCase());
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    if (!doc.exists || doc.data().used) return null;
+    tx.update(ref, { used: true });
+    return doc.data();
+  });
 }
 
 // SCREENS
@@ -361,16 +380,36 @@ function checkPinReady() {
   document.getElementById('pin-btn').disabled = !ok;
 }
 
-function startFromPin() {
+async function startFromPin() {
   const pinVal = document.getElementById('pin-input').value.trim().toUpperCase();
-  const idx = validatePin(pinVal);
-  if (idx < 0) { document.getElementById('pin-error').style.display='block'; return; }
-  document.getElementById('pin-error').style.display='none';
+  const pinBtn = document.getElementById('pin-btn');
+  const pinError = document.getElementById('pin-error');
+  pinBtn.disabled = true;
+  pinBtn.textContent = 'Checking…';
+  pinError.style.display = 'none';
+
+  let pinData;
+  try {
+    pinData = await claimPin(pinVal);
+  } catch (e) {
+    pinError.textContent = 'Could not verify PIN — check your connection and try again.';
+    pinError.style.display = 'block';
+    pinBtn.disabled = false;
+    pinBtn.textContent = 'Continue';
+    return;
+  }
+  if (!pinData) {
+    pinError.textContent = 'Invalid or already used PIN. Contact your supervisor.';
+    pinError.style.display = 'block';
+    pinBtn.disabled = false;
+    pinBtn.textContent = 'Continue';
+    return;
+  }
   state.empName = document.getElementById('emp-name').value.trim();
-  const pinData = getPinData(pinVal);
-  markPinUsed(pinVal);
   document.getElementById('level-sub').textContent = state.empName;
-  if (pinData && pinData.level) {
+  pinBtn.disabled = false;
+  pinBtn.textContent = 'Continue';
+  if (pinData.level) {
     // PIN carries a specific level: skip the picker screen entirely so
     // there is no step where a different level could be chosen.
     selectedLevel = pinData.level;
